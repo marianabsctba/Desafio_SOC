@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desafio de Análise de Logs – Blue Team Raiz</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Cinzel:wght@400;700&display=swap');
+
+  :root {
+    --bg-primary: #030c18;
+    --bg-secondary: #061428;
+    --bg-panel: #071a2e;
+    --bg-card: #0a1f35;
+    --border-cyan: #00d4ff;
+    --border-dim: #0a3a52;
+    --accent-cyan: #00d4ff;
+    --accent-green: #00ff88;
+    --accent-red: #ff2244;
+    --accent-orange: #ff6b00;
+    --accent-yellow: #ffd700;
+    --text-primary: #c8e6ff;
+    --text-secondary: #6a9ab8;
+    --text-muted: #2a5070;
+    --text-log: #a0d8b0;
+    --text-log-dim: #3a6a4a;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-display: 'Orbitron', monospace;
+    --font-body: 'Rajdhani', sans-serif;
+    --glow-cyan: 0 0 20px rgba(0,212,255,0.4);
+    --glow-green: 0 0 20px rgba(0,255,136,0.3);
+    --glow-red: 0 0 20px rgba(255,34,68,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body, body *, body *::before, body *::after { font-weight: 700 !important; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(0,80,120,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(0,40,80,0.2) 0%, transparent 50%),
+      linear-gradient(180deg, #030c18 0%, #050f1f 100%);
+  }
+
+  /* Scanlines overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ─── HEADER ─── */
+  .site-header {
+    border-bottom: 1px solid var(--border-dim);
+    padding: 12px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(6,20,40,0.95);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .header-logo {
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--accent-cyan);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .header-status {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: var(--glow-green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-green);
+    letter-spacing: 1px;
+  }
+
+  .header-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── INTRO SCREEN ─── */
+  #screen-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 57px);
+    padding: 60px 20px;
+  }
+
+  .intro-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-cyan);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    border: 1px solid var(--border-dim);
+    padding: 6px 20px;
+    margin-bottom: 30px;
+    background: rgba(0,212,255,0.05);
+  }
+
+  .intro-title {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 4vw, 42px);
+    font-weight: 900;
+    text-align: center;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    color: #fff;
+    text-shadow: 0 0 40px rgba(0,212,255,0.5);
+    letter-spacing: 2px;
+  }
+
+  .intro-title span { color: var(--accent-cyan); }
+
+  .intro-sub {
+    font-size: 16px;
+    color: var(--text-secondary);
+    text-align: center;
+    max-width: 620px;
+    line-height: 1.7;
+    margin-bottom: 50px;
+    font-weight: 300;
+  }
+
+  .intro-sub strong { color: var(--accent-cyan); font-weight: 600; }
+
+  .intro-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: rgba(255,107,0,0.08);
+    border: 1px solid rgba(255,107,0,0.3);
+    border-left: 3px solid var(--accent-orange);
+    padding: 16px 20px;
+    max-width: 620px;
+    margin-bottom: 40px;
+    font-size: 13px;
+    color: #ffb86c;
+    line-height: 1.6;
+  }
+
+  .intro-warning .warn-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+
+  .form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    padding: 40px;
+    max-width: 520px;
+    width: 100%;
+    position: relative;
+  }
+
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  }
+
+  .form-card-title {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--accent-cyan);
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+  }
+
+  .form-group {
+    margin-bottom: 22px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .form-input {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border-dim);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 400;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .form-input:focus {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 1px rgba(0,212,255,0.2);
+  }
+
+  .form-input::placeholder { color: var(--text-muted); }
+
+  .btn-primary {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent-cyan);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    z-index: -1;
+  }
+
+  .btn-primary:hover {
+    color: #000;
+    box-shadow: var(--glow-cyan);
+  }
+
+  .btn-primary:hover::before { transform: translateX(0); }
+
+  /* ─── CHALLENGE SCREEN ─── */
+  #screen-challenge {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px 20px 60px;
+  }
+
+  .challenge-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-dim);
+    padding-bottom: 20px;
+  }
+
+  .challenge-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--accent-cyan);
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+
+  .scenario-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    border-left: 3px solid var(--accent-cyan);
+    padding: 20px 24px;
+    margin-bottom: 30px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-primary);
+  }
+
+  .scenario-box h3 {
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--accent-cyan);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+  }
+
+  .scenario-box p { margin-bottom: 8px; }
+  .scenario-box p:last-child { margin-bottom: 0; }
+
+  /* ─── LOG PANELS ─── */
+  .logs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 900px) {
+    .logs-grid { grid-template-columns: 1fr; }
+  }
+
+  .log-panel {
+    background: #020a14;
+    border: 1px solid var(--border-dim);
+    overflow: hidden;
+  }
+
+  .log-panel-header {
+    background: var(--bg-panel);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .log-panel-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .dot-linux { background: var(--accent-green); box-shadow: var(--glow-green); }
+  .dot-windows { background: #4fc3f7; box-shadow: 0 0 8px rgba(79,195,247,0.5); }
+  .dot-firewall { background: var(--accent-orange); box-shadow: 0 0 8px rgba(255,107,0,0.5); }
+  .dot-siem { background: #b388ff; box-shadow: 0 0 8px rgba(179,136,255,0.5); }
+
+  .log-panel-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    flex: 1;
+  }
+
+  .log-panel-badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+
+  .badge-linux { background: rgba(0,255,136,0.1); color: var(--accent-green); border: 1px solid rgba(0,255,136,0.2); }
+  .badge-windows { background: rgba(79,195,247,0.1); color: #4fc3f7; border: 1px solid rgba(79,195,247,0.2); }
+  .badge-firewall { background: rgba(255,107,0,0.1); color: var(--accent-orange); border: 1px solid rgba(255,107,0,0.2); }
+  .badge-siem { background: rgba(179,136,255,0.1); color: #b388ff; border: 1px solid rgba(179,136,255,0.2); }
+
+  .log-content {
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.9;
+    max-height: 340px;
+    overflow-y: auto;
+    color: var(--text-log);
+  }
+
+  .log-content::-webkit-scrollbar { width: 4px; }
+  .log-content::-webkit-scrollbar-track { background: transparent; }
+  .log-content::-webkit-scrollbar-thumb { background: var(--border-dim); }
+
+  .log-line { display: block; padding: 1px 0; }
+  .log-dim { color: var(--text-log-dim); }
+  .log-warn { color: #ffb86c; }
+  .log-error { color: var(--accent-red); }
+  .log-success { color: var(--accent-green); }
+  .log-info { color: #4fc3f7; }
+  .log-siem-alert { color: #b388ff; }
+  .log-ts { color: #3a7a9a; }
+  .log-host { color: #5a9ab0; }
+  .log-ip { color: #ffcc66; }
+  .log-user { color: #80cbc4; }
+
+  /* ─── QUESTIONS ─── */
+  .questions-section { margin-bottom: 30px; }
+
+  .section-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--accent-cyan);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-dim);
+  }
+
+  .question-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .question-card.answered { border-color: rgba(0,212,255,0.2); }
+
+  .question-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .question-num {
+    font-family: var(--font-display);
+    font-size: 10px;
+    color: var(--accent-cyan);
+    letter-spacing: 2px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 4px 10px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .question-text {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+  }
+
+  .options-list {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    padding: 12px 16px;
+    border: 1px solid transparent;
+    background: rgba(0,0,0,0.3);
+    transition: all 0.15s;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .option-label:hover {
+    border-color: var(--border-dim);
+    background: rgba(0,212,255,0.04);
+    color: var(--text-primary);
+  }
+
+  .option-label input[type="radio"] { display: none; }
+
+  .option-marker {
+    width: 20px; height: 20px;
+    border: 1px solid var(--border-dim);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all 0.15s;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+  }
+
+  .option-label input:checked ~ .option-marker {
+    border-color: var(--accent-cyan);
+    background: var(--accent-cyan);
+    color: #000;
+  }
+
+  .option-label input:checked ~ .option-text {
+    color: var(--text-primary);
+  }
+
+  .option-label input:checked ~ * { }
+
+  .option-label:has(input:checked) {
+    border-color: rgba(0,212,255,0.3);
+    background: rgba(0,212,255,0.06);
+  }
+
+  .option-letter {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-top: 2px;
+    width: 14px;
+  }
+
+  /* ─── RESULT STATES ─── */
+  .option-label.correct-ans {
+    border-color: rgba(0,255,136,0.4) !important;
+    background: rgba(0,255,136,0.06) !important;
+    color: var(--accent-green) !important;
+  }
+
+  .option-label.wrong-ans {
+    border-color: rgba(255,34,68,0.4) !important;
+    background: rgba(255,34,68,0.06) !important;
+    color: var(--accent-red) !important;
+  }
+
+  /* ─── ACTION BUTTONS ─── */
+  .action-bar {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+  }
+
+  .btn-grade {
+    background: transparent;
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 3px;
+    padding: 14px 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-grade:hover {
+    background: var(--accent-cyan);
+    color: #000;
+    box-shadow: var(--glow-cyan);
+  }
+
+  /* ─── RESULTS ─── */
+  #results-section { display: none; }
+
+  .score-board {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-board::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  }
+
+  .score-value {
+    font-family: var(--font-display);
+    font-size: 72px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .score-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .score-perfect { color: var(--accent-green); text-shadow: var(--glow-green); }
+  .score-fail { color: var(--accent-red); text-shadow: var(--glow-red); }
+  .score-partial { color: var(--accent-yellow); }
+
+  .score-msg {
+    font-size: 15px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ─── COMMENTS ─── */
+  .comments-section {
+    margin-bottom: 30px;
+  }
+
+  .comment-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .comment-header {
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .comment-q-num {
+    font-family: var(--font-display);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+  }
+
+  .comment-result-badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 10px;
+    letter-spacing: 1px;
+    border-radius: 2px;
+  }
+
+  .badge-correct { background: rgba(0,255,136,0.1); color: var(--accent-green); border: 1px solid rgba(0,255,136,0.3); }
+  .badge-wrong { background: rgba(255,34,68,0.1); color: var(--accent-red); border: 1px solid rgba(255,34,68,0.3); }
+
+  .comment-body { padding: 20px; }
+
+  .comment-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .comment-key {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    min-width: 80px;
+    margin-top: 2px;
+  }
+
+  .comment-val { color: var(--text-secondary); }
+  .comment-val.correct { color: var(--accent-green); }
+  .comment-val.wrong { color: var(--accent-red); }
+
+  .comment-explanation {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-dim);
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--text-primary);
+  }
+
+  .comment-explanation strong { color: var(--accent-cyan); }
+
+  .comment-correlation {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(0,212,255,0.04);
+    border-left: 2px solid var(--border-dim);
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    line-height: 1.7;
+  }
+
+  .comment-correlation span { color: var(--accent-cyan); }
+
+  /* ─── CERT SECTION ─── */
+  #cert-section { display: none; margin-top: 40px; }
+
+  .cert-blocked {
+    background: rgba(255,34,68,0.06);
+    border: 1px solid rgba(255,34,68,0.2);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    color: #ff6a7a;
+    margin-bottom: 20px;
+  }
+
+  .cert-blocked .block-icon { font-size: 22px; }
+
+  /* ─── CERTIFICATE ─── */
+  #certificate-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  #certificate {
+    width: 860px;
+    min-height: 580px;
+    background: linear-gradient(135deg, #fafaf8 0%, #f0ede6 40%, #e8e3d8 100%);
+    padding: 0;
+    position: relative;
+    font-family: 'Georgia', serif;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  .cert-border-outer {
+    position: absolute;
+    inset: 12px;
+    border: 2px solid #1a3a5c;
+  }
+
+  .cert-border-inner {
+    position: absolute;
+    inset: 18px;
+    border: 1px solid rgba(26,58,92,0.3);
+  }
+
+  .cert-corner {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+  }
+
+  .cert-corner svg { display: block; }
+  .cert-corner.tl { top: 8px; left: 8px; }
+  .cert-corner.tr { top: 8px; right: 8px; transform: scaleX(-1); }
+  .cert-corner.bl { bottom: 8px; left: 8px; transform: scaleY(-1); }
+  .cert-corner.br { bottom: 8px; right: 8px; transform: scale(-1); }
+
+  .cert-content {
+    position: relative;
+    z-index: 1;
+    padding: 48px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .cert-top-badge {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .cert-top-badge::before,
+  .cert-top-badge::after {
+    content: '';
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #1a3a5c);
+  }
+
+  .cert-top-badge::after {
+    background: linear-gradient(90deg, #1a3a5c, transparent);
+  }
+
+  .cert-org {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: #1a3a5c;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .cert-main-title {
+    font-family: 'Cinzel', serif;
+    font-size: 34px;
+    color: #0d2440;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .cert-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: #1a3a5c;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .cert-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #1a3a5c 20%, #1a3a5c 80%, transparent);
+    margin-bottom: 28px;
+  }
+
+  .cert-certify-text {
+    font-size: 14px;
+    color: #2a4a6a;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    font-style: italic;
+    font-weight: 700;
+  }
+
+  .cert-pronoun {
+    font-size: 13px;
+    color: #3a5a7a;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    font-style: italic;
+  }
+
+  .cert-name {
+    font-family: 'Cinzel', serif;
+    font-size: 36px;
+    color: #0d2440;
+    margin-bottom: 22px;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    position: relative;
+  }
+
+  .cert-name::after {
+    content: '';
+    display: block;
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #1a3a5c, transparent);
+    margin: 10px auto 0;
+  }
+
+  .cert-body-text {
+    font-size: 13px;
+    color: #2a4a6a;
+    line-height: 1.9;
+    max-width: 620px;
+    margin-bottom: 26px;
+  }
+
+  .cert-challenge-name {
+    font-weight: bold;
+    color: #0d2440;
+    font-style: italic;
+  }
+
+  .cert-meta-row {
+    display: flex;
+    gap: 50px;
+    margin-bottom: 26px;
+    align-items: center;
+  }
+
+  .cert-meta-item {
+    text-align: center;
+  }
+
+  .cert-meta-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    color: #3a5a7a;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .cert-meta-value {
+    font-size: 13px;
+    color: #0d2440;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .cert-seal {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #0d2440, #1a3a5c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #1a3a5c;
+    box-shadow: 0 2px 12px rgba(13,36,64,0.3), inset 0 1px 3px rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  .cert-seal::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .cert-seal-text {
+    font-family: 'Cinzel', serif;
+    font-size: 8px;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 1px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .cert-sig-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 60px;
+    margin-bottom: 8px;
+  }
+
+  .cert-sig-block { text-align: center; }
+
+  .cert-sig-line {
+    width: 160px;
+    height: 1px;
+    background: #1a3a5c;
+    margin: 0 auto 6px;
+  }
+
+  .cert-sig-name {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: #0d2440;
+    letter-spacing: 2px;
+  }
+
+  .cert-sig-role {
+    font-size: 10px;
+    color: #3a5a7a;
+    letter-spacing: 1px;
+    margin-top: 2px;
+    font-style: italic;
+  }
+
+  .cert-id {
+    font-size: 9px;
+    color: rgba(13,36,64,0.4);
+    letter-spacing: 2px;
+    font-family: 'Courier New', monospace;
+    margin-top: 10px;
+  }
+
+  .cert-watermark {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: 80px;
+    color: rgba(26,58,92,0.04);
+    letter-spacing: 20px;
+    white-space: nowrap;
+    pointer-events: none;
+    font-weight: bold;
+    z-index: 0;
+  }
+
+  .btn-download {
+    background: var(--accent-green);
+    border: none;
+    color: #000;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 3px;
+    padding: 14px 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: block;
+    margin: 0 auto;
+    text-transform: uppercase;
+  }
+
+  .btn-download:hover {
+    background: #00e57a;
+    box-shadow: var(--glow-green);
+  }
+
+  /* ─── MISC ─── */
+  .hidden { display: none !important; }
+
+  .highlight-line {
+    background: rgba(255,107,0,0.05);
+    display: block;
+    padding: 1px 4px;
+    border-left: 2px solid rgba(255,107,0,0.3);
+    margin-left: -4px;
+  }
+
+  @media (max-width: 900px) {
+    #certificate { width: 100%; min-height: auto; }
+    .cert-content { padding: 30px 30px; }
+    .cert-main-title { font-size: 24px; }
+    .cert-name { font-size: 26px; }
+    .cert-meta-row { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-logo">▸ SOC ANALYST PLATFORM // BLUE TEAM RAIZ</div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    <span class="status-text">SISTEMA OPERACIONAL</span>
+    <span class="header-time" id="live-clock">--:--:--</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════ INTRO ═══════════════════════════════════════ -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-badge">▸ EXERCÍCIO DE TRIAGEM // NÍVEL SOC N1/N2</div>
+
+  <h1 class="intro-title">
+    Desafio de Análise de Logs<br><span>Blue Team Raiz</span>
+  </h1>
+
+  <p class="intro-sub">
+    Você recebeu um conjunto de logs de <strong>quatro fontes distintas</strong> de um ambiente corporativo.<br>
+    Um incidente aconteceu. Sua tarefa é identificá-lo. <strong>Ninguém vai te dar a resposta de graça.</strong>
+  </p>
+
+  <div class="intro-warning">
+    <span class="warn-icon">⚠</span>
+    <span>
+      Este desafio não é um quiz de decoreba. As respostas exigem correlação entre múltiplas fontes, análise de timestamps e separação de ruído operacional. Se você acha que a resposta vai aparecer numa única linha de log, você ainda não é Blue Team Raiz — mas pode vir a ser.
+    </span>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-title">▸ IDENTIFICAÇÃO DO ANALISTA</div>
+
+    <div class="form-group">
+      <label class="form-label" for="user-name">Nome completo</label>
+      <input class="form-input" type="text" id="user-name" placeholder="Ex.: João da Silva Pereira" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="user-pronoun">Pronome para o certificado</label>
+      <input class="form-input" type="text" id="user-pronoun" placeholder="Ex.: ele, ela, elu, a analista...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="user-date">Data de conclusão</label>
+      <input class="form-input" type="date" id="user-date">
+    </div>
+
+    <button class="btn-primary" onclick="startChallenge()">▸ Iniciar desafio</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CHALLENGE ═══════════════════════════════════════ -->
+<div id="screen-challenge" class="screen">
+
+  <div class="challenge-header">
+    <div class="challenge-title">▸ ANÁLISE DE INCIDENTE // CASO #IR-2024-0847</div>
+  </div>
+
+  <!-- SCENARIO -->
+  <div class="scenario-box">
+    <h3>▸ BRIEFING DO INCIDENTE</h3>
+    <p>O time de segurança recebeu um alerta automático às <strong>03:52 UTC</strong> de uma quinta-feira. O SIEM sinalizou atividade anômala em um servidor Linux de produção (<code>srv-prod-01</code>). O ambiente afetado faz parte de uma infraestrutura híbrida com integração Active Directory.</p>
+    <p>Seu trabalho é correlacionar os logs das quatro fontes disponíveis, identificar o vetor de ataque, o ativo comprometido e a linha do tempo do incidente. <strong>Cuidado: o ambiente tem ruído operacional legítimo.</strong> Nem tudo que parece suspeito é o ataque. E nem tudo que parece normal é ruído.</p>
+    <p>Analise os painéis abaixo com atenção. Depois, responda às cinco questões. Você precisa de <strong>100% de acerto</strong> para obter o certificado.</p>
+  </div>
+
+  <!-- LOG PANELS -->
+  <div class="logs-grid">
+
+    <!-- LINUX -->
+    <div class="log-panel">
+      <div class="log-panel-header">
+        <span class="log-panel-dot dot-linux"></span>
+        <span class="log-panel-title">Linux auth.log — srv-prod-01</span>
+        <span class="log-panel-badge badge-linux">LINUX</span>
+      </div>
+      <div class="log-content">
+<span class="log-line"><span class="log-ts">2024-03-14 03:21:04</span> <span class="log-host">srv-prod-01</span> sshd[4421]: <span class="log-dim">Accepted publickey for backup from <span class="log-ip">10.10.1.5</span> port 52341 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:21:07</span> <span class="log-host">srv-prod-01</span> sshd[4421]: <span class="log-dim">pam_unix(sshd:session): session opened for user backup by (uid=0)</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:11</span> <span class="log-host">srv-prod-01</span> sshd[4501]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49221 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:14</span> <span class="log-host">srv-prod-01</span> sshd[4502]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49228 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:18</span> <span class="log-host">srv-prod-01</span> sshd[4503]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49235 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:22</span> <span class="log-host">srv-prod-01</span> sshd[4504]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49241 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:27</span> <span class="log-host">srv-prod-01</span> sshd[4505]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49248 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:30</span> <span class="log-host">srv-prod-01</span> sshd[4506]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49254 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:29:02</span> <span class="log-host">srv-prod-01</span> sshd[4510]: <span class="log-warn">Failed password for sysop from <span class="log-ip">185.220.101.47</span> port 49301 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:29:08</span> <span class="log-host">srv-prod-01</span> sshd[4511]: <span class="log-warn">Failed password for sysop from <span class="log-ip">185.220.101.47</span> port 49307 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:30:15</span> <span class="log-host">srv-prod-01</span> sshd[4521]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49411 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:30:19</span> <span class="log-host">srv-prod-01</span> sshd[4522]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49417 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:30:23</span> <span class="log-host">srv-prod-01</span> sshd[4523]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 49423 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:31:04</span> <span class="log-host">srv-prod-01</span> sshd[4530]: <span class="log-error">Invalid user oracle from <span class="log-ip">185.220.101.47</span> port 49501 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:44:57</span> <span class="log-host">srv-prod-01</span> sshd[4601]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 51022 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:45:01</span> <span class="log-host">srv-prod-01</span> sshd[4602]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 51028 ssh2</span></span>
+<span class="log-line log-success highlight-line"><span class="log-ts">2024-03-14 03:51:33</span> <span class="log-host">srv-prod-01</span> sshd[4688]: <span class="log-success">Accepted password for dbadmin from <span class="log-ip">185.220.101.47</span> port 51840 ssh2</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:51:34</span> <span class="log-host">srv-prod-01</span> sshd[4688]: <span class="log-dim">pam_unix(sshd:session): session opened for user dbadmin by (uid=0)</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:51:41</span> <span class="log-host">srv-prod-01</span> sudo[4692]: <span class="log-error">dbadmin : TTY=pts/1 ; PWD=/home/dbadmin ; USER=root ; COMMAND=/bin/bash</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:52:07</span> <span class="log-host">srv-prod-01</span> sshd[4701]: <span class="log-dim">Accepted publickey for monitoring from <span class="log-ip">10.10.1.20</span> port 38812 ssh2</span></span>
+      </div>
+    </div>
+
+    <!-- WINDOWS -->
+    <div class="log-panel">
+      <div class="log-panel-header">
+        <span class="log-panel-dot dot-windows"></span>
+        <span class="log-panel-title">Windows Security Events — DC-CORP-01</span>
+        <span class="log-panel-badge badge-windows">WINDOWS</span>
+      </div>
+      <div class="log-content">
+<span class="log-line"><span class="log-ts">2024-03-14 03:10:22</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4624</span> <span class="log-dim">Logon Type: 3 | Account: CORP\jsilva | Source IP: <span class="log-ip">10.10.2.45</span> | Workstation: WKS-FIN-07 — Logon bem-sucedido</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:14:05</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4625</span> <span class="log-dim">Logon Type: 3 | Account: CORP\svc_backup | Source IP: <span class="log-ip">10.10.1.5</span> | Failure: 0xC000006A — Senha incorreta</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:14:08</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4625</span> <span class="log-dim">Logon Type: 3 | Account: CORP\svc_backup | Source IP: <span class="log-ip">10.10.1.5</span> | Failure: 0xC000006A — Senha incorreta</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:14:12</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4740</span> <span class="log-warn">Account Lockout: CORP\svc_backup | Caller: DC-CORP-01 — Conta bloqueada por tentativas excessivas</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:22:14</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4624</span> <span class="log-dim">Logon Type: 10 | Account: CORP\adminloc | Source IP: <span class="log-ip">10.10.1.5</span> | Workstation: SRV-BACKUP-01 — RDP bem-sucedido</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:25:38</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4688</span> <span class="log-dim">Process Create: cmd.exe | Parent: explorer.exe | User: CORP\adminloc | PID: 3412</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:27:49</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4648</span> <span class="log-dim">Explicit Credential Use: CORP\adminloc tentou acesso a \\srv-prod-01\IPC$ — Logon com credenciais explícitas</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:32:10</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4624</span> <span class="log-dim">Logon Type: 3 | Account: CORP\mrocha | Source IP: <span class="log-ip">10.10.2.88</span> | Workstation: WKS-DEV-03 — Logon bem-sucedido</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:41:03</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4672</span> <span class="log-dim">Special Logon: CORP\adminloc | Privileges: SeDebugPrivilege, SeBackupPrivilege — Sessão com privilégios especiais</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:50:44</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4625</span> <span class="log-warn">Logon Type: 3 | Account: CORP\dbadmin | Source IP: <span class="log-ip">185.220.101.47</span> | Failure: 0xC000006D — Nome de usuário ou autenticação inválida</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:51:58</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4624</span> <span class="log-dim">Logon Type: 3 | Account: CORP\jsilva | Source IP: <span class="log-ip">10.10.2.45</span> | Workstation: WKS-FIN-07 — Segundo logon da sessão</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:52:18</span> <span class="log-host">DC-CORP-01</span> <span class="log-info">EventID 4624</span> <span class="log-warn">Logon Type: 3 | Account: CORP\dbadmin | Source IP: <span class="log-ip">185.220.101.47</span> | Workstation: — Autenticação domínio via hash</span></span>
+      </div>
+    </div>
+
+    <!-- FIREWALL -->
+    <div class="log-panel">
+      <div class="log-panel-header">
+        <span class="log-panel-dot dot-firewall"></span>
+        <span class="log-panel-title">Firewall — EDGE-FW-01 (pfSense)</span>
+        <span class="log-panel-badge badge-firewall">FIREWALL</span>
+      </div>
+      <div class="log-content">
+<span class="log-line"><span class="log-ts">2024-03-14 03:15:00</span> <span class="log-host">EDGE-FW-01</span> <span class="log-success">PASS</span> <span class="log-dim">em0 <span class="log-ip">10.10.1.5</span>:52100 → <span class="log-ip">10.10.1.10</span>:22 proto=TCP flags=S len=60 [ADMIN-MGMT]</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:20:11</span> <span class="log-host">EDGE-FW-01</span> <span class="log-success">PASS</span> <span class="log-dim">em0 <span class="log-ip">10.10.1.5</span>:52341 → <span class="log-ip">10.10.1.50</span>:22 proto=TCP flags=S len=60 [ADMIN-MGMT]</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:27:55</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:49221 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP flags=S len=60 [INET-IN] rule=ssh-allow</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:01</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:49228 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP flags=S len=60 [INET-IN] rule=ssh-allow</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:06</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:49235 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP flags=S len=60 [INET-IN] rule=ssh-allow</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:10</span> <span class="log-host">EDGE-FW-01</span> <span class="log-dim">PASS em1 <span class="log-ip">185.220.101.47</span>:49241 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP flags=S len=60 [INET-IN] rule=ssh-allow</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:30:02</span> <span class="log-host">EDGE-FW-01</span> <span class="log-dim">PASS em1 <span class="log-ip">185.220.101.47</span>:49301 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP [INET-IN]</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:31:10</span> <span class="log-host">EDGE-FW-01</span> <span class="log-success">PASS</span> <span class="log-dim">em0 <span class="log-ip">10.10.2.88</span>:41200 → <span class="log-ip">10.10.1.100</span>:443 proto=TCP [LAN-CORP] — Acesso legítimo git-server</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:44:41</span> <span class="log-host">EDGE-FW-01</span> <span class="log-dim">PASS em1 <span class="log-ip">185.220.101.47</span>:51022 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP [INET-IN]</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:44:45</span> <span class="log-host">EDGE-FW-01</span> <span class="log-dim">PASS em1 <span class="log-ip">185.220.101.47</span>:51028 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP [INET-IN]</span></span>
+<span class="log-line highlight-line"><span class="log-ts">2024-03-14 03:51:28</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:51840 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP flags=PA len=260 [INET-IN] bytes_in=1240 bytes_out=3800 duration=23s</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:52:05</span> <span class="log-host">EDGE-FW-01</span> <span class="log-success">PASS</span> <span class="log-dim">em0 <span class="log-ip">10.10.1.20</span>:38812 → <span class="log-ip">10.10.1.50</span>:22 proto=TCP [MONITOR-AGENT]</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:52:18</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:52001 → <span class="log-ip">203.0.113.10</span>:445 proto=TCP flags=S [INET-IN] rule=smb-block — BLOQUEADO</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:52:19</span> <span class="log-host">EDGE-FW-01</span> <span class="log-error">BLOCK</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:52001 → <span class="log-ip">203.0.113.10</span>:445 proto=TCP [INET-IN] rule=smb-block</span></span>
+      </div>
+    </div>
+
+    <!-- SIEM -->
+    <div class="log-panel">
+      <div class="log-panel-header">
+        <span class="log-panel-dot dot-siem"></span>
+        <span class="log-panel-title">Correlação SIEM — SentinelCore v4.2</span>
+        <span class="log-panel-badge badge-siem">SIEM</span>
+      </div>
+      <div class="log-content">
+<span class="log-line"><span class="log-ts">2024-03-14 03:14:15</span> <span class="log-siem-alert">[ALERT-LOW]</span> <span class="log-dim">Rule: AD_LOCKOUT_001 | Asset: DC-CORP-01 | Account: svc_backup | Trigger: 2 falhas consecutivas + lockout em 7s | Source: <span class="log-ip">10.10.1.5</span> | Classificação: possível erro de serviço ou credencial desatualizada</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:22:05</span> <span class="log-siem-alert">[INFO]</span> <span class="log-dim">Rule: RDP_INTERNAL_001 | Asset: DC-CORP-01 | Account: adminloc | Source: <span class="log-ip">10.10.1.5</span> | RDP bem-sucedido de host interno | Baseline: esperado para esse perfil</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:28:35</span> <span class="log-siem-alert">[ALERT-MED]</span> <span class="log-dim">Rule: SSH_BRUTE_INET_001 | Asset: srv-prod-01 | Trigger: 6 falhas SSH em 27s de mesma origem | Source: <span class="log-ip">185.220.101.47</span> | Usuários tentados: dbadmin | Status: ongoing</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:29:15</span> <span class="log-siem-alert">[ALERT-MED]</span> <span class="log-dim">Rule: SSH_USER_ENUM_001 | Asset: srv-prod-01 | Trigger: mesma origem tentou 3 usernames distintos em 1min | Source: <span class="log-ip">185.220.101.47</span> | Usuários: dbadmin, sysop, oracle</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:32:18</span> <span class="log-siem-alert">[INFO]</span> <span class="log-dim">Rule: USER_LOGON_NORMAL | Asset: DC-CORP-01 | Account: mrocha | Source: <span class="log-ip">10.10.2.88</span> | Logon tipo 3 dentro do horário e da subnet esperada | Baseline: normal</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:41:10</span> <span class="log-siem-alert">[ALERT-LOW]</span> <span class="log-dim">Rule: PRIV_LOGON_001 | Asset: DC-CORP-01 | Account: adminloc | Trigger: SeDebugPrivilege atribuído | Nota: comportamento esperado para manutenção programada | Analyst: auto-supressed</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:45:10</span> <span class="log-siem-alert">[ALERT-MED]</span> <span class="log-dim">Rule: SSH_BRUTE_INET_001 | Asset: srv-prod-01 | Trigger: retomada de tentativas após pausa de 14min | Source: <span class="log-ip">185.220.101.47</span> | Padrão: persistente / não automatizado por timing irregular</span></span>
+<span class="log-line highlight-line"><span class="log-ts">2024-03-14 03:51:40</span> <span class="log-siem-alert">[ALERT-CRIT]</span> <span class="log-dim">Rule: BRUTE_FORCE_SUCCESS_001 | Asset: srv-prod-01 | Trigger: autenticação bem-sucedida detectada após sequência de N falhas de mesma origem | Source correlacionada: ver firewall e auth.log | Ação pós-auth: escalação de privilégio detectada (sudo → root) | Classificação: <span class="log-error">PROVÁVEL COMPROMETIMENTO</span></span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:52:00</span> <span class="log-siem-alert">[ALERT-CRIT]</span> <span class="log-dim">Rule: LATERAL_MOVE_001 | Asset: DC-CORP-01 | Trigger: autenticação de domínio recebida de IP externo não catalogado (<span class="log-ip">185.220.101.47</span>) para conta CORP\dbadmin | Anomalia: conta sem histórico de logon remoto externo</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:52:22</span> <span class="log-siem-alert">[ALERT-HIGH]</span> <span class="log-dim">Rule: SMB_SCAN_INET_001 | Asset: EDGE-FW-01 | Trigger: tentativa de acesso SMB porta 445 de mesma origem do incidente SSH | Source: <span class="log-ip">185.220.101.47</span> | Status: bloqueado pelo firewall | Indicativo: reconhecimento pós-comprometimento</span></span>
+      </div>
+    </div>
+
+  </div><!-- /logs-grid -->
+
+  <!-- QUESTIONS -->
+  <div class="questions-section">
+    <div class="section-label">▸ QUESTÕES DE ANÁLISE</div>
+
+    <!-- Q1 -->
+    <div class="question-card" id="qcard-1">
+      <div class="question-header">
+        <span class="question-num">Q01</span>
+        <span class="question-text">Considerando a sequência temporal, a telemetria de rede e a correlação do SIEM, qual origem deve ser tratada como autora mais provável do incidente principal — e qual evidência torna essa hipótese mais forte que as demais?</span>
+      </div>
+      <div class="options-list">
+        <label class="option-label">
+          <input type="radio" name="q1" value="a">
+          <span class="option-marker">A</span>
+          <span class="option-text">10.10.1.5 — pois apareceu antes em acessos administrativos relevantes, tocou o ambiente interno e também surgiu associada a eventos de autenticação e bloqueio no domínio.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q1" value="b">
+          <span class="option-marker">B</span>
+          <span class="option-text">185.220.101.47 — pois sustenta a trilha ofensiva mais consistente entre as fontes: repetição no SSH, sessão real confirmada no firewall e encadeamento com sucesso seguido de sudo no Linux.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q1" value="c">
+          <span class="option-marker">C</span>
+          <span class="option-text">185.220.101.47 — porque concentrou o maior número de tentativas no auth.log, o que numa leitura objetiva já o colocaria como origem dominante do incidente.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q1" value="d">
+          <span class="option-marker">D</span>
+          <span class="option-text">10.10.2.45 — pois realizou logons repetidos no DC-CORP-01 no mesmo intervalo, abrindo hipótese de duplicidade de sessão ou uso indevido da identidade associada.</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="question-card" id="qcard-2">
+      <div class="question-header">
+        <span class="question-num">Q02</span>
+        <span class="question-text">Qual usuário deve ser tratado como alvo efetivo da sequência de brute force que terminou em acesso bem-sucedido, considerando Linux, domínio e a ordem dos eventos?</span>
+      </div>
+      <div class="options-list">
+        <label class="option-label">
+          <input type="radio" name="q2" value="a">
+          <span class="option-marker">A</span>
+          <span class="option-text">svc_backup — pois foi a conta bloqueada no AD após falhas consecutivas vindas de host interno, o que pode sugerir abuso persistente de credencial de serviço.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q2" value="b">
+          <span class="option-marker">B</span>
+          <span class="option-text">sysop — pois apareceu na fase de enumeração a partir do mesmo IP externo, mantendo-se entre os alvos plausíveis da sequência ofensiva observada.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q2" value="c">
+          <span class="option-marker">C</span>
+          <span class="option-text">dbadmin — pois concentra a trilha principal do caso: acumula tentativas no SSH, obtém sucesso no Linux às 03:51:33 e reaparece ligado a autenticação anômala no cenário.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q2" value="d">
+          <span class="option-marker">D</span>
+          <span class="option-text">adminloc — pois realizou logon privilegiado e uso explícito de credenciais contra o srv-prod-01 no mesmo recorte temporal, tornando-se um candidato forte no foco da análise.</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="question-card" id="qcard-3">
+      <div class="question-header">
+        <span class="question-num">Q03</span>
+        <span class="question-text">Qual conjunto de evidências, cruzando mais de uma fonte, confirma de forma mais robusta que houve comprometimento efetivo do servidor — e não só atividade suspeita sem sucesso?</span>
+      </div>
+      <div class="options-list">
+        <label class="option-label">
+          <input type="radio" name="q3" value="a">
+          <span class="option-marker">A</span>
+          <span class="option-text">O alerta ALERT-CRIT do SIEM, isoladamente, pois já classifica o caso como provável comprometimento e consolida a leitura operacional dos demais sinais.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q3" value="b">
+          <span class="option-marker">B</span>
+          <span class="option-text">A combinação entre login SSH bem-sucedido, sessão confirmada no firewall, sudo para root e tentativa posterior de acesso SMB compõe a cadeia mais sólida de comprometimento.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q3" value="c">
+          <span class="option-marker">C</span>
+          <span class="option-text">A autenticação bem-sucedida no Linux, somada ao logon de domínio para CORP\dbadmin no mesmo contexto anômalo, sustenta reutilização da credencial além do host inicial.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q3" value="d">
+          <span class="option-marker">D</span>
+          <span class="option-text">Os eventos 4648 e 4672 do adminloc, lidos em conjunto, indicam uso de credenciais elevadas e possível movimento lateral interno com capacidade administrativa relevante.</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="question-card" id="qcard-4">
+      <div class="question-header">
+        <span class="question-num">Q04</span>
+        <span class="question-text">Qual janela temporal delimita melhor a progressão principal do incidente, desde a fase ativa de brute force até a primeira ação pós-comprometimento observável no host?</span>
+      </div>
+      <div class="options-list">
+        <label class="option-label">
+          <input type="radio" name="q4" value="a">
+          <span class="option-marker">A</span>
+          <span class="option-text">03:14 – 03:41 UTC, pois cobre o lockout do svc_backup e a atividade privilegiada do adminloc, reunindo os principais eventos suspeitos do domínio nesse intervalo.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q4" value="b">
+          <span class="option-marker">B</span>
+          <span class="option-text">03:28 – 03:51 UTC, pois começa nas primeiras tentativas SSH externas e vai até o sudo para root às 03:51:41, primeira ação pós-comprometimento visível no host.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q4" value="c">
+          <span class="option-marker">C</span>
+          <span class="option-text">03:21 – 03:52 UTC, pois inclui todo o período de atividade do servidor, do acesso inicial de backup até a conexão posterior do agente de monitoramento.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q4" value="d">
+          <span class="option-marker">D</span>
+          <span class="option-text">03:44 – 03:52 UTC, pois a fase mais decisiva ocorre na retomada final das tentativas, encerrando com sucesso e atividade lateral logo depois.</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="question-card" id="qcard-5">
+      <div class="question-header">
+        <span class="question-num">Q05</span>
+        <span class="question-text">Qual conclusão analítica descreve melhor a natureza e o estágio do incidente com base no conjunto completo de logs, sem subestimar nem extrapolar o que foi observado?</span>
+      </div>
+      <div class="options-list">
+        <label class="option-label">
+          <input type="radio" name="q5" value="a">
+          <span class="option-marker">A</span>
+          <span class="option-text">Houve brute force SSH bem-sucedido com comprometimento de dbadmin, escalação para root e sinais de pós-exploração inicial, incluindo autenticação anômala no domínio e tentativa lateral.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q5" value="b">
+          <span class="option-marker">B</span>
+          <span class="option-text">O incidente foi essencialmente contido pelo firewall, já que a tentativa SMB foi barrada e os logs exibidos não mostram persistência estável nem exfiltração concluída.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q5" value="c">
+          <span class="option-marker">C</span>
+          <span class="option-text">O ambiente indica dois compromissos simultâneos: um interno ligado ao adminloc e outro externo via SSH, sugerindo operação coordenada por dois vetores distintos.</span>
+        </label>
+        <label class="option-label">
+          <input type="radio" name="q5" value="d">
+          <span class="option-marker">D</span>
+          <span class="option-text">O caso ainda deveria ser tratado apenas como suspeita forte, porque autenticação remota bem-sucedida e tentativa SMB isolada não bastariam, sozinhas, para concluir comprometimento confirmado.</span>
+        </label>
+      </div>
+    </div>
+
+  </div><!-- /questions-section -->
+
+  <div class="action-bar">
+    <button class="btn-grade" onclick="gradeChallenge()">▸ Corrigir desafio</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-section">
+
+    <div id="score-board" class="score-board">
+      <div class="score-value" id="score-display">0/5</div>
+      <div class="score-label" id="score-label-text">RESULTADO</div>
+      <p class="score-msg" id="score-msg-text"></p>
+    </div>
+
+    <div class="comments-section">
+      <div class="section-label">▸ RESPOSTAS COMENTADAS</div>
+      <div id="comments-container"></div>
+    </div>
+
+    <div id="cert-section">
+      <div id="cert-blocked-msg" class="cert-blocked hidden">
+        <span class="block-icon">🔒</span>
+        <span>O certificado é liberado exclusivamente para aproveitamento de <strong>100% (5/5 questões)</strong>. Revise os comentários, estude os logs novamente e tente outra vez. Blue Team Raiz não é título dado — é conquistado.</span>
+      </div>
+
+      <div id="cert-available" class="hidden">
+        <div class="section-label">▸ CERTIFICADO DE CONCLUSÃO</div>
+
+        <div id="certificate-wrapper">
+          <div id="certificate">
+            <div class="cert-watermark">BLUE TEAM</div>
+            <div class="cert-border-outer"></div>
+            <div class="cert-border-inner"></div>
+
+            <!-- Corner decorations -->
+            <div class="cert-corner tl">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                <path d="M2 2 L20 2 L20 6 L6 6 L6 20 L2 20 Z" fill="#1a3a5c" opacity="0.5"/>
+                <path d="M2 2 L12 2 L12 4 L4 4 L4 12 L2 12 Z" fill="#1a3a5c"/>
+              </svg>
+            </div>
+            <div class="cert-corner tr">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                <path d="M2 2 L20 2 L20 6 L6 6 L6 20 L2 20 Z" fill="#1a3a5c" opacity="0.5"/>
+                <path d="M2 2 L12 2 L12 4 L4 4 L4 12 L2 12 Z" fill="#1a3a5c"/>
+              </svg>
+            </div>
+            <div class="cert-corner bl">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                <path d="M2 2 L20 2 L20 6 L6 6 L6 20 L2 20 Z" fill="#1a3a5c" opacity="0.5"/>
+                <path d="M2 2 L12 2 L12 4 L4 4 L4 12 L2 12 Z" fill="#1a3a5c"/>
+              </svg>
+            </div>
+            <div class="cert-corner br">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                <path d="M2 2 L20 2 L20 6 L6 6 L6 20 L2 20 Z" fill="#1a3a5c" opacity="0.5"/>
+                <path d="M2 2 L12 2 L12 4 L4 4 L4 12 L2 12 Z" fill="#1a3a5c"/>
+              </svg>
+            </div>
+
+            <div class="cert-content">
+              <div class="cert-top-badge">
+                <span class="cert-org">Mariana BS · Be Safe</span>
+              </div>
+
+              <div class="cert-main-title">Certificado</div>
+              <div class="cert-subtitle">de Conclusão</div>
+
+              <div class="cert-divider"></div>
+
+              <p class="cert-certify-text">Certificamos que</p>
+              <p class="cert-pronoun" id="cert-pronoun-display"></p>
+              <p class="cert-name" id="cert-name-display">—</p>
+
+              <p class="cert-body-text">
+                concluiu com aproveitamento máximo o
+                <span class="cert-challenge-name">Desafio de Análise de Logs – Blue Team Raiz</span>,
+                demonstrando capacidade analítica para correlacionar eventos de múltiplas fontes,
+                interpretar registros de segurança em contexto operacional e identificar
+                evidências relevantes com precisão técnica compatível com o trabalho de triagem em SOC.
+              </p>
+
+              <div class="cert-meta-row">
+                <div class="cert-meta-item">
+                  <div class="cert-meta-label">Data</div>
+                  <div class="cert-meta-value" id="cert-date-display">—</div>
+                </div>
+                <div class="cert-seal">
+                  <div class="cert-seal-text">BLUE<br>TEAM<br>RAIZ<br>✓</div>
+                </div>
+                <div class="cert-meta-item">
+                  <div class="cert-meta-label">Aproveitamento</div>
+                  <div class="cert-meta-value">100% · 5/5</div>
+                </div>
+              </div>
+
+              <div class="cert-sig-section">
+                <div class="cert-sig-block">
+                  <div class="cert-sig-line"></div>
+                  <div class="cert-sig-name">Mariana BS</div>
+                  <div class="cert-sig-role">Be Safe · Instrutora</div>
+                </div>
+              </div>
+
+              <div class="cert-id" id="cert-id-display">ID: —</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn-download" onclick="downloadCert()">⬇ Baixar certificado em PNG</button>
+        </div>
+      </div>
+    </div><!-- /cert-section -->
+
+  </div><!-- /results-section -->
+
+</div><!-- /screen-challenge -->
+
+<script>
+// ─────────────────────────────────────────────
+// GABARITO OFUSCADO + ALTERNATIVAS DINÂMICAS
+// ─────────────────────────────────────────────
+// As respostas não ficam mais em texto claro nem presas à letra visível.
+// A cada carregamento, as alternativas são embaralhadas e os valores dos radios
+// recebem tokens codificados. Isso dificulta a cola por inspeção simples do HTML.
+const ANSWER_KEY = 'BTR-2026-MARIANA-BS';
+const ANSWERS_ENC = { q1: 'IA==', q2: 'IQ==', q3: 'IA==', q4: 'IA==', q5: 'Iw==' };
+
+function xorCodec(value) {
+  return Array.from(value).map((ch, i) =>
+    String.fromCharCode(ch.charCodeAt(0) ^ ANSWER_KEY.charCodeAt(i % ANSWER_KEY.length))
+  ).join('');
+}
+
+function encodeSecure(value) {
+  return btoa(xorCodec(value));
+}
+
+function decodeSecure(token) {
+  try { return xorCodec(atob(token)); }
+  catch (_) { return ''; }
+}
+
+function secureShuffle(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const rnd = new Uint32Array(1);
+    window.crypto.getRandomValues(rnd);
+    const j = rnd[0] % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function initializeDynamicAlternatives() {
+  for (let i = 1; i <= 5; i++) {
+    const qKey = `q${i}`;
+    const list = document.querySelector(`#qcard-${i} .options-list`);
+    if (!list || list.dataset.dynamicReady === 'true') continue;
+
+    const labels = Array.from(list.querySelectorAll('.option-label'));
+    const shuffled = secureShuffle(labels);
+
+    shuffled.forEach((label, idx) => {
+      const input = label.querySelector('input[type="radio"]');
+      const marker = label.querySelector('.option-marker');
+      const originalKey = input.value;
+
+      input.value = encodeSecure(originalKey);
+      input.dataset.lock = encodeSecure(qKey + ':' + originalKey);
+      marker.textContent = OPTION_LABELS[idx];
+      list.appendChild(label);
+    });
+
+    list.dataset.dynamicReady = 'true';
+  }
+}
+
+function getSelectedOptionKey(qKey) {
+  const selected = document.querySelector(`input[name="${qKey}"]:checked`);
+  return selected ? decodeSecure(selected.value) : null;
+}
+
+function getVisibleOptionMeta(qKey, optionKey) {
+  const inputs = Array.from(document.querySelectorAll(`input[name="${qKey}"]`));
+  for (const input of inputs) {
+    if (decodeSecure(input.value) === optionKey) {
+      const label = input.closest('.option-label');
+      return {
+        letter: label.querySelector('.option-marker')?.textContent || '?',
+        text: label.querySelector('.option-text')?.textContent.trim() || ''
+      };
+    }
+  }
+  return { letter: '?', text: '' };
+}
+
+// ─────────────────────────────────────────────
+// COMENTÁRIOS DETALHADOS
+// ─────────────────────────────────────────────
+const COMMENTS = [
+  {
+    num: 1,
+    question: "Qual origem conduziu o incidente principal?",
+    correctEnc: 'IA==',
+    options: {
+      a: "10.10.1.5 — atividade interna sensível e eventos de autenticação correlatos",
+      b: "185.220.101.47 — sequência ofensiva consistente entre Linux, firewall e SIEM",
+      c: "185.220.101.47 — maior volume de falhas observado no auth.log",
+      d: "10.10.2.45 — repetição de logons no DC-CORP-01 no mesmo intervalo"
+    },
+    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> A alternativa C acerta o IP, mas erra o método: volume de tentativa, sozinho, não fecha análise. A B é superior porque amarra Linux, firewall e SIEM na mesma sequência ofensiva, mostrando persistência, sessão real e desdobramento até a escalação local.`,
+    correlation: `<span>Linux auth.log</span>: 15+ falhas de 185.220.101.47 → sucesso às 03:51:33 ↔ <span>Firewall</span>: sessão TCP confirmada com bytes_in=1240 bytes_out=3800 duration=23s às 03:51:28 ↔ <span>SIEM</span>: BRUTE_FORCE_SUCCESS_001 correlacionando as mesmas fontes`
+  },
+  {
+    num: 2,
+    question: "Qual usuário foi o alvo efetivo do brute force bem-sucedido?",
+    correctEnc: 'IQ==',
+    options: {
+      a: "svc_backup — bloqueado no AD após falhas originadas de host interno",
+      b: "sysop — apareceu na enumeração a partir do mesmo IP externo",
+      c: "dbadmin — concentra a cadeia principal entre tentativas, sucesso e uso anômalo",
+      d: "adminloc — logon privilegiado e uso explícito de credenciais no período"
+    },
+    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> O svc_backup sofreu lockout real, mas em contexto interno e sem continuidade ofensiva. O sysop aparece só na enumeração. O adminloc é o melhor distrator, porque tem eventos sensíveis, porém ligados a atividade interna tratada como esperada. Só o dbadmin fecha a trilha principal entre tentativa, sucesso e reaproveitamento da identidade.`,
+    correlation: `<span>auth.log</span>: 15 falhas + sucesso para dbadmin ↔ <span>Windows EventID 4625</span> às 03:50:44: dbadmin falhou no DC ↔ <span>Windows EventID 4624</span> às 03:52:18: dbadmin autenticado no domínio ↔ <span>SIEM LATERAL_MOVE_001</span>: anomalia de IP externo autenticando conta de domínio`
+  },
+  {
+    num: 3,
+    question: "Qual conjunto de evidências confirma comprometimento efetivo?",
+    correctEnc: 'IA==',
+    options: {
+      a: "ALERT-CRIT do SIEM tratado isoladamente como prova suficiente",
+      b: "Login SSH + sessão real no firewall + sudo root + tentativa SMB",
+      c: "Login Linux bem-sucedido + autenticação de domínio para dbadmin",
+      d: "Eventos 4648 e 4672 do adminloc em contexto administrativo interno"
+    },
+    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> O alerta do SIEM, sozinho, não basta; precisa ser validado nos logs brutos. A opção C é forte, mas ainda incompleta porque não explicita a elevação para root no host. Já a D descreve atividade interna plausível, porém contextualizada como esperada. A B fecha a cadeia inteira: acesso, sessão real, escalação e tentativa de expansão.`,
+    correlation: `<span>auth.log 03:51:33</span>: Accepted password + sudo root ↔ <span>Firewall 03:51:28</span>: bytes transferidos, sessão real ↔ <span>SIEM 03:51:40</span>: BRUTE_FORCE_SUCCESS_001 ↔ <span>Firewall 03:52:19</span>: BLOCK SMB 445 — reconhecimento pós-acesso`
+  },
+  {
+    num: 4,
+    question: "Qual janela temporal delimita a progressão do incidente?",
+    correctEnc: 'IA==',
+    options: {
+      a: "03:14 – 03:41 UTC — lockout do serviço e atividade privilegiada no domínio",
+      b: "03:28 – 03:51 UTC — primeiras tentativas externas até sudo root no host",
+      c: "03:21 – 03:52 UTC — janela ampliada com backup e monitoramento legítimos",
+      d: "03:44 – 03:52 UTC — apenas a retomada final e os passos seguintes"
+    },
+    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> A alternativa A mistura ruído operacional do domínio com o incidente principal. A C erra por incluir atividade legítima de backup e monitoramento só por proximidade temporal. A D começa tarde demais, ignorando a primeira fase ativa do ataque. Como a pergunta pede até a primeira ação pós-comprometimento no host, o melhor recorte vai das primeiras tentativas externas ao sudo para root às 03:51:41.`,
+    correlation: `<span>Firewall 03:27:55</span>: primeira sessão de 185.220.101.47 ↔ <span>SIEM 03:28:35</span>: início da correlação ↔ <span>auth.log 03:51:33</span>: login bem-sucedido ↔ <span>auth.log 03:51:41</span>: sudo para root, primeira ação pós-comprometimento`
+  },
+  {
+    num: 5,
+    question: "Qual conclusão analítica é tecnicamente mais adequada?",
+    correctEnc: 'Iw==',
+    options: {
+      a: "Brute force bem-sucedido, root no host e pós-exploração inicial em andamento",
+      b: "Contenção parcial no firewall, sem prova de resolução do comprometimento",
+      c: "Dois comprometimentos simultâneos, um interno e outro externo coordenados",
+      d: "Suspeita forte apenas, ainda sem base suficiente para concluir intrusão ativa"
+    },
+    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> A alternativa B confunde contenção parcial com resolução do incidente. A C extrapola sem evidência suficiente de coordenação entre os eventos internos e externos. A D subestima sinais já fortes demais para ficarem só no campo da suspeita. A melhor conclusão é a de intrusão ativa em estágio inicial de pós-exploração.`,
+    correlation: `Síntese de todas as fontes: <span>auth.log</span> (brute force + sucesso + sudo root) + <span>Windows</span> (autenticação domínio de IP externo) + <span>Firewall</span> (sessão ativa + SMB bloqueado) + <span>SIEM</span> (CRIT + LATERAL_MOVE) = intrusão ativa confirmada em fase de pós-exploração`
+  }
+];
+
+// ─────────────────────────────────────────────
+// LABELS DAS OPÇÕES
+// ─────────────────────────────────────────────
+const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+
+let userData = {};
+let graded = false;
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    now.toUTCString().split(' ')[4] + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────
+function startChallenge() {
+  const name = document.getElementById('user-name').value.trim();
+  const pronoun = document.getElementById('user-pronoun').value.trim();
+  const date = document.getElementById('user-date').value;
+
+  if (!name || !pronoun || !date) {
+    alert('Preencha todos os campos antes de iniciar o desafio.');
+    return;
+  }
+
+  userData = { name, pronoun, date };
+
+  document.getElementById('screen-intro').classList.remove('active');
+  document.getElementById('screen-challenge').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ─────────────────────────────────────────────
+// GRADE
+// ─────────────────────────────────────────────
+function gradeChallenge() {
+  if (graded) return;
+
+  initializeDynamicAlternatives();
+
+  // Coleta as respostas já descriptografando o token do radio selecionado.
+  const userAnswers = {};
+  for (let i = 1; i <= 5; i++) {
+    const qKey = `q${i}`;
+    userAnswers[qKey] = getSelectedOptionKey(qKey);
+  }
+
+  // Check all answered
+  for (let i = 1; i <= 5; i++) {
+    if (!userAnswers[`q${i}`]) {
+      alert(`Você não respondeu a questão ${i}. Responda todas antes de corrigir.`);
+      return;
+    }
+  }
+
+  graded = true;
+
+  // Score
+  let score = 0;
+  for (let i = 1; i <= 5; i++) {
+    const qKey = `q${i}`;
+    if (userAnswers[qKey] === decodeSecure(ANSWERS_ENC[qKey])) score++;
+  }
+
+  // Visual feedback on options
+  for (let i = 1; i <= 5; i++) {
+    const qKey = `q${i}`;
+    const correct = decodeSecure(ANSWERS_ENC[qKey]);
+    const userAns = userAnswers[qKey];
+    const options = document.querySelectorAll(`input[name="${qKey}"]`);
+    options.forEach(opt => {
+      const label = opt.closest('.option-label');
+      const optionKey = decodeSecure(opt.value);
+      if (optionKey === correct) {
+        label.classList.add('correct-ans');
+      } else if (optionKey === userAns && userAns !== correct) {
+        label.classList.add('wrong-ans');
+      }
+    });
+  }
+
+  // Score display
+  const isPerfect = score === 5;
+  const scoreEl = document.getElementById('score-display');
+  const labelEl = document.getElementById('score-label-text');
+  const msgEl = document.getElementById('score-msg-text');
+
+  scoreEl.textContent = `${score}/5`;
+  if (isPerfect) {
+    scoreEl.className = 'score-value score-perfect';
+    labelEl.textContent = 'APROVEITAMENTO MÁXIMO';
+    msgEl.textContent = 'Você correlacionou corretamente todas as fontes de log e identificou o incidente com precisão técnica. O certificado está liberado. Blue Team Raiz não era título dado — você foi lá e buscou.';
+  } else if (score >= 3) {
+    scoreEl.className = 'score-value score-partial';
+    labelEl.textContent = 'RESULTADO PARCIAL';
+    msgEl.textContent = `${score} de 5 corretas. Você leu os logs. Mas ainda está confundindo ruído com sinal em algum ponto. Revise os comentários abaixo, releia as fontes com atenção e tente novamente. O certificado exige 100%.`;
+  } else {
+    scoreEl.className = 'score-value score-fail';
+    labelEl.textContent = 'RESULTADO INSUFICIENTE';
+    msgEl.textContent = `${score} de 5 corretas. Não tem problema — correlacionar logs de quatro fontes distintas é uma habilidade que se desenvolve. Leia os comentários com atenção. O caminho está lá.`;
+  }
+
+  // Build comments
+  const container = document.getElementById('comments-container');
+  container.innerHTML = '';
+
+  COMMENTS.forEach((c, idx) => {
+    const qKey = `q${idx + 1}`;
+    const userAns = userAnswers[qKey];
+    const correctKey = decodeSecure(c.correctEnc);
+    const isCorrect = userAns === correctKey;
+
+    const userMeta = userAns ? getVisibleOptionMeta(qKey, userAns) : { letter: '—', text: 'Não respondida' };
+    const correctMeta = getVisibleOptionMeta(qKey, correctKey);
+
+    container.innerHTML += `
+      <div class="comment-card">
+        <div class="comment-header">
+          <span class="comment-q-num">QUESTÃO ${c.num}</span>
+          <span class="comment-result-badge ${isCorrect ? 'badge-correct' : 'badge-wrong'}">
+            ${isCorrect ? '✓ CORRETO' : '✗ INCORRETO'}
+          </span>
+        </div>
+        <div class="comment-body">
+          <div class="comment-row">
+            <span class="comment-key">Marcada</span>
+            <span class="comment-val ${isCorrect ? 'correct' : 'wrong'}">[${userMeta.letter}] ${userMeta.text}</span>
+          </div>
+          ${!isCorrect ? `<div class="comment-row">
+            <span class="comment-key">Correta</span>
+            <span class="comment-val correct">[${correctMeta.letter}] ${correctMeta.text}</span>
+          </div>` : ''}
+          <div class="comment-explanation">${c.explanation}</div>
+          ${c.correlation ? `<div class="comment-correlation">↳ Correlação: ${c.correlation}</div>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  // Show results
+  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('cert-section').style.display = 'block';
+
+  if (isPerfect) {
+    document.getElementById('cert-available').classList.remove('hidden');
+    populateCertificate();
+  } else {
+    document.getElementById('cert-blocked-msg').classList.remove('hidden');
+  }
+
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+// CERTIFICATE
+// ─────────────────────────────────────────────
+function populateCertificate() {
+  document.getElementById('cert-name-display').textContent = userData.name;
+  document.getElementById('cert-pronoun-display').textContent = userData.pronoun;
+
+  const d = new Date(userData.date + 'T12:00:00');
+  const formatted = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  document.getElementById('cert-date-display').textContent = formatted;
+
+  // Generate cert ID
+  const raw = userData.name + userData.date + '5/5';
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw.charCodeAt(i);
+    hash = ((hash << 5) - hash) + c;
+    hash |= 0;
+  }
+  const certId = 'BTR-' + Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
+  document.getElementById('cert-id-display').textContent = 'ID: ' + certId;
+}
+
+function downloadCert() {
+  const el = document.getElementById('certificate');
+  html2canvas(el, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#f0ede6',
+    logging: false,
+    width: el.offsetWidth,
+    height: el.offsetHeight
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'certificado-blue-team-raiz.png';
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+  }).catch(err => {
+    alert('Erro ao gerar o certificado. Tente novamente ou faça uma captura de tela.');
+    console.error(err);
+  });
+}
+
+// Set default date
+document.getElementById('user-date').valueAsDate = new Date();
+</script>
+</body>
+</html>
