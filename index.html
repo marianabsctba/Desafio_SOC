@@ -1231,22 +1231,22 @@
         <label class="option-label">
           <input type="radio" name="q1" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">10.10.1.5 — pois apareceu antes em acessos administrativos relevantes, tocou o ambiente interno e também surgiu associada a eventos de autenticação e bloqueio no domínio.</span>
+          <span class="option-text">10.10.1.5 — origem interna com ações administrativas e lockout correlato, mas sem continuidade clara para sucesso SSH externo ou sudo no host afetado.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q1" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">185.220.101.47 — pois sustenta a trilha ofensiva mais consistente entre as fontes: repetição no SSH, sessão real confirmada no firewall e encadeamento com sucesso seguido de sudo no Linux.</span>
+          <span class="option-text">185.220.101.47 — origem que cruza firewall, auth.log e SIEM: tenta SSH, mantém sessão real, obtém login e encadeia sudo no servidor.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q1" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">185.220.101.47 — porque concentrou o maior número de tentativas no auth.log, o que numa leitura objetiva já o colocaria como origem dominante do incidente.</span>
+          <span class="option-text">185.220.101.47 — origem com maior volume de falhas no auth.log; indício forte, porém volume isolado ainda não comprova o incidente completo.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q1" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">10.10.2.45 — pois realizou logons repetidos no DC-CORP-01 no mesmo intervalo, abrindo hipótese de duplicidade de sessão ou uso indevido da identidade associada.</span>
+          <span class="option-text">10.10.2.45 — estação com logons repetidos no domínio no mesmo recorte, mas sem vínculo direto com a sequência SSH ou escalação local.</span>
         </label>
       </div>
     </div>
@@ -1261,22 +1261,22 @@
         <label class="option-label">
           <input type="radio" name="q2" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">svc_backup — pois foi a conta bloqueada no AD após falhas consecutivas vindas de host interno, o que pode sugerir abuso persistente de credencial de serviço.</span>
+          <span class="option-text">svc_backup — conta bloqueada no AD após falhas internas, relevante para triagem, mas sem sucesso posterior nem associação ao SSH externo.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q2" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">sysop — pois apareceu na fase de enumeração a partir do mesmo IP externo, mantendo-se entre os alvos plausíveis da sequência ofensiva observada.</span>
+          <span class="option-text">sysop — usuário testado durante enumeração pelo mesmo IP externo, porém não há login aceito nem ação pós-autenticação ligada a essa conta.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q2" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">dbadmin — pois concentra a trilha principal do caso: acumula tentativas no SSH, obtém sucesso no Linux às 03:51:33 e reaparece ligado a autenticação anômala no cenário.</span>
+          <span class="option-text">dbadmin — usuário que concentra falhas, login aceito no Linux às 03:51:33 e reutilização anômala no domínio logo depois.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q2" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">adminloc — pois realizou logon privilegiado e uso explícito de credenciais contra o srv-prod-01 no mesmo recorte temporal, tornando-se um candidato forte no foco da análise.</span>
+          <span class="option-text">adminloc — conta privilegiada com eventos sensíveis no período, mas contextualizada como atividade interna esperada e não como alvo do brute force.</span>
         </label>
       </div>
     </div>
@@ -1291,22 +1291,22 @@
         <label class="option-label">
           <input type="radio" name="q3" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">O alerta ALERT-CRIT do SIEM, isoladamente, pois já classifica o caso como provável comprometimento e consolida a leitura operacional dos demais sinais.</span>
+          <span class="option-text">O ALERT-CRIT do SIEM é um sinal forte, mas sozinho não deve fechar incidente sem validação em logs brutos e telemetria de rede.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q3" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">A combinação entre login SSH bem-sucedido, sessão confirmada no firewall, sudo para root e tentativa posterior de acesso SMB compõe a cadeia mais sólida de comprometimento.</span>
+          <span class="option-text">Login SSH aceito, sessão TCP real no firewall, sudo para root e tentativa SMB posterior formam a cadeia mais robusta de intrusão.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q3" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">A autenticação bem-sucedida no Linux, somada ao logon de domínio para CORP\dbadmin no mesmo contexto anômalo, sustenta reutilização da credencial além do host inicial.</span>
+          <span class="option-text">Login Linux aceito e autenticação de domínio para CORP\dbadmin indicam risco de reutilização, mas não mostram sozinhos a elevação local.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q3" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">Os eventos 4648 e 4672 do adminloc, lidos em conjunto, indicam uso de credenciais elevadas e possível movimento lateral interno com capacidade administrativa relevante.</span>
+          <span class="option-text">Eventos 4648 e 4672 do adminloc indicam credencial explícita e privilégio, mas o SIEM os enquadra como manutenção interna esperada.</span>
         </label>
       </div>
     </div>
@@ -1321,22 +1321,22 @@
         <label class="option-label">
           <input type="radio" name="q4" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">03:14 – 03:41 UTC, pois cobre o lockout do svc_backup e a atividade privilegiada do adminloc, reunindo os principais eventos suspeitos do domínio nesse intervalo.</span>
+          <span class="option-text">03:14 – 03:41 UTC reúne lockout de serviço e privilégio no domínio, mas mistura ruído operacional com eventos fora da trilha principal.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q4" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">03:28 – 03:51 UTC, pois começa nas primeiras tentativas SSH externas e vai até o sudo para root às 03:51:41, primeira ação pós-comprometimento visível no host.</span>
+          <span class="option-text">03:28 – 03:51 UTC cobre as primeiras tentativas SSH externas até o sudo para root, primeira ação pós-comprometimento no host.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q4" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">03:21 – 03:52 UTC, pois inclui todo o período de atividade do servidor, do acesso inicial de backup até a conexão posterior do agente de monitoramento.</span>
+          <span class="option-text">03:21 – 03:52 UTC inclui backup e monitoramento legítimos; é ampla demais para delimitar a progressão ofensiva principal.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q4" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">03:44 – 03:52 UTC, pois a fase mais decisiva ocorre na retomada final das tentativas, encerrando com sucesso e atividade lateral logo depois.</span>
+          <span class="option-text">03:44 – 03:52 UTC cobre a retomada final e passos posteriores, mas ignora o início ativo do brute force externo.</span>
         </label>
       </div>
     </div>
@@ -1351,22 +1351,22 @@
         <label class="option-label">
           <input type="radio" name="q5" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">Houve brute force SSH bem-sucedido com comprometimento de dbadmin, escalação para root e sinais de pós-exploração inicial, incluindo autenticação anômala no domínio e tentativa lateral.</span>
+          <span class="option-text">Brute force SSH bem-sucedido contra dbadmin, sudo para root e sinais iniciais de pós-exploração, com tentativa lateral bloqueada.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q5" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">O incidente foi essencialmente contido pelo firewall, já que a tentativa SMB foi barrada e os logs exibidos não mostram persistência estável nem exfiltração concluída.</span>
+          <span class="option-text">Contenção parcial no firewall ocorreu no SMB, mas isso não desfaz o login aceito nem a escalação local já observada no host.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q5" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">O ambiente indica dois compromissos simultâneos: um interno ligado ao adminloc e outro externo via SSH, sugerindo operação coordenada por dois vetores distintos.</span>
+          <span class="option-text">Dois compromissos coordenados seriam hipótese excessiva: há eventos internos sensíveis, porém sem prova de vínculo operacional com o ataque.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q5" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">O caso ainda deveria ser tratado apenas como suspeita forte, porque autenticação remota bem-sucedida e tentativa SMB isolada não bastariam, sozinhas, para concluir comprometimento confirmado.</span>
+          <span class="option-text">Tratar como mera suspeita subestima a cadeia: login aceito, sudo e correlação entre fontes já sustentam intrusão ativa inicial.</span>
         </label>
       </div>
     </div>
@@ -1493,27 +1493,50 @@
 
 <script>
 // ─────────────────────────────────────────────
-// GABARITO OFUSCADO + ALTERNATIVAS DINÂMICAS
+// GABARITO + COMENTÁRIOS OFUSCADOS
 // ─────────────────────────────────────────────
-// As respostas não ficam mais em texto claro nem presas à letra visível.
-// A cada carregamento, as alternativas são embaralhadas e os valores dos radios
-// recebem tokens codificados. Isso dificulta a cola por inspeção simples do HTML.
-const ANSWER_KEY = 'BTR-2026-MARIANA-BS';
-const ANSWERS_ENC = { q1: 'IA==', q2: 'IQ==', q3: 'IA==', q4: 'IA==', q5: 'Iw==' };
+// Respostas e comentários não ficam em texto claro.
+// As letras visíveis são embaralhadas a cada carregamento.
+const ANSWER_SALT = 'MBS::BLUE-TEAM-RAIZ::2026::LOGS::SALT-v4::MarianaBS';
+const ANSWER_PEPPER = '::IR-2024-0847::anti-obvio::';
+const ANSWER_KEY = ANSWER_SALT + ANSWER_PEPPER;
+const ANSWERS_ENC = {"q1": "NmAiGABgPWRnAXYkY3cPMGNleFQYCBILAQ8IeX9yZgoIand5Y0xEFkc=", "q2": "NmAiGABgPWdnAXYkY3cPMWNleFQYCBJQVQoPKXh3ZgsCZHMpMh5CFkc=", "q3": "NmAiGABgPWZnAXYkY3cPMGNleFQYCBIKBFhcKHwjYwJZYXl6YhlEFkc=", "q4": "NmAiGABgPWFnAXYkY3cPMGNleFQYCBJTBFkJfnpxZVtYMCV0YBhGFkc=", "q5": "NmAiGABgPWBnAXYkY3cPM2NleFQYCBJRV1gIeHlxMQkLY3J0YUkSFkc="};
+const COMMENTS_BLOB = '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';
 
-function xorCodec(value) {
-  return Array.from(value).map((ch, i) =>
-    String.fromCharCode(ch.charCodeAt(0) ^ ANSWER_KEY.charCodeAt(i % ANSWER_KEY.length))
-  ).join('');
-}
-
-function encodeSecure(value) {
-  return btoa(xorCodec(value));
+function xorBytesFromB64(token) {
+  try {
+    const bin = atob(token);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) {
+      out[i] = bin.charCodeAt(i) ^ ANSWER_KEY.charCodeAt(i % ANSWER_KEY.length);
+    }
+    return out;
+  } catch (_) {
+    return new Uint8Array();
+  }
 }
 
 function decodeSecure(token) {
-  try { return xorCodec(atob(token)); }
-  catch (_) { return ''; }
+  return new TextDecoder().decode(xorBytesFromB64(token));
+}
+
+
+function decodeAnswerToken(token) {
+  try {
+    const payload = JSON.parse(decodeSecure(token));
+    return payload && typeof payload.a === 'string' ? payload.a : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function encodeSecure(value) {
+  const data = new TextEncoder().encode(value);
+  let bin = '';
+  for (let i = 0; i < data.length; i++) {
+    bin += String.fromCharCode(data[i] ^ ANSWER_KEY.charCodeAt(i % ANSWER_KEY.length));
+  }
+  return btoa(bin);
 }
 
 function secureShuffle(array) {
@@ -1573,73 +1596,7 @@ function getVisibleOptionMeta(qKey, optionKey) {
 // ─────────────────────────────────────────────
 // COMENTÁRIOS DETALHADOS
 // ─────────────────────────────────────────────
-const COMMENTS = [
-  {
-    num: 1,
-    question: "Qual origem conduziu o incidente principal?",
-    correctEnc: 'IA==',
-    options: {
-      a: "10.10.1.5 — atividade interna sensível e eventos de autenticação correlatos",
-      b: "185.220.101.47 — sequência ofensiva consistente entre Linux, firewall e SIEM",
-      c: "185.220.101.47 — maior volume de falhas observado no auth.log",
-      d: "10.10.2.45 — repetição de logons no DC-CORP-01 no mesmo intervalo"
-    },
-    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> A alternativa C acerta o IP, mas erra o método: volume de tentativa, sozinho, não fecha análise. A B é superior porque amarra Linux, firewall e SIEM na mesma sequência ofensiva, mostrando persistência, sessão real e desdobramento até a escalação local.`,
-    correlation: `<span>Linux auth.log</span>: 15+ falhas de 185.220.101.47 → sucesso às 03:51:33 ↔ <span>Firewall</span>: sessão TCP confirmada com bytes_in=1240 bytes_out=3800 duration=23s às 03:51:28 ↔ <span>SIEM</span>: BRUTE_FORCE_SUCCESS_001 correlacionando as mesmas fontes`
-  },
-  {
-    num: 2,
-    question: "Qual usuário foi o alvo efetivo do brute force bem-sucedido?",
-    correctEnc: 'IQ==',
-    options: {
-      a: "svc_backup — bloqueado no AD após falhas originadas de host interno",
-      b: "sysop — apareceu na enumeração a partir do mesmo IP externo",
-      c: "dbadmin — concentra a cadeia principal entre tentativas, sucesso e uso anômalo",
-      d: "adminloc — logon privilegiado e uso explícito de credenciais no período"
-    },
-    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> O svc_backup sofreu lockout real, mas em contexto interno e sem continuidade ofensiva. O sysop aparece só na enumeração. O adminloc é o melhor distrator, porque tem eventos sensíveis, porém ligados a atividade interna tratada como esperada. Só o dbadmin fecha a trilha principal entre tentativa, sucesso e reaproveitamento da identidade.`,
-    correlation: `<span>auth.log</span>: 15 falhas + sucesso para dbadmin ↔ <span>Windows EventID 4625</span> às 03:50:44: dbadmin falhou no DC ↔ <span>Windows EventID 4624</span> às 03:52:18: dbadmin autenticado no domínio ↔ <span>SIEM LATERAL_MOVE_001</span>: anomalia de IP externo autenticando conta de domínio`
-  },
-  {
-    num: 3,
-    question: "Qual conjunto de evidências confirma comprometimento efetivo?",
-    correctEnc: 'IA==',
-    options: {
-      a: "ALERT-CRIT do SIEM tratado isoladamente como prova suficiente",
-      b: "Login SSH + sessão real no firewall + sudo root + tentativa SMB",
-      c: "Login Linux bem-sucedido + autenticação de domínio para dbadmin",
-      d: "Eventos 4648 e 4672 do adminloc em contexto administrativo interno"
-    },
-    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> O alerta do SIEM, sozinho, não basta; precisa ser validado nos logs brutos. A opção C é forte, mas ainda incompleta porque não explicita a elevação para root no host. Já a D descreve atividade interna plausível, porém contextualizada como esperada. A B fecha a cadeia inteira: acesso, sessão real, escalação e tentativa de expansão.`,
-    correlation: `<span>auth.log 03:51:33</span>: Accepted password + sudo root ↔ <span>Firewall 03:51:28</span>: bytes transferidos, sessão real ↔ <span>SIEM 03:51:40</span>: BRUTE_FORCE_SUCCESS_001 ↔ <span>Firewall 03:52:19</span>: BLOCK SMB 445 — reconhecimento pós-acesso`
-  },
-  {
-    num: 4,
-    question: "Qual janela temporal delimita a progressão do incidente?",
-    correctEnc: 'IA==',
-    options: {
-      a: "03:14 – 03:41 UTC — lockout do serviço e atividade privilegiada no domínio",
-      b: "03:28 – 03:51 UTC — primeiras tentativas externas até sudo root no host",
-      c: "03:21 – 03:52 UTC — janela ampliada com backup e monitoramento legítimos",
-      d: "03:44 – 03:52 UTC — apenas a retomada final e os passos seguintes"
-    },
-    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> A alternativa A mistura ruído operacional do domínio com o incidente principal. A C erra por incluir atividade legítima de backup e monitoramento só por proximidade temporal. A D começa tarde demais, ignorando a primeira fase ativa do ataque. Como a pergunta pede até a primeira ação pós-comprometimento no host, o melhor recorte vai das primeiras tentativas externas ao sudo para root às 03:51:41.`,
-    correlation: `<span>Firewall 03:27:55</span>: primeira sessão de 185.220.101.47 ↔ <span>SIEM 03:28:35</span>: início da correlação ↔ <span>auth.log 03:51:33</span>: login bem-sucedido ↔ <span>auth.log 03:51:41</span>: sudo para root, primeira ação pós-comprometimento`
-  },
-  {
-    num: 5,
-    question: "Qual conclusão analítica é tecnicamente mais adequada?",
-    correctEnc: 'Iw==',
-    options: {
-      a: "Brute force bem-sucedido, root no host e pós-exploração inicial em andamento",
-      b: "Contenção parcial no firewall, sem prova de resolução do comprometimento",
-      c: "Dois comprometimentos simultâneos, um interno e outro externo coordenados",
-      d: "Suspeita forte apenas, ainda sem base suficiente para concluir intrusão ativa"
-    },
-    explanation: `<strong>A alternativa correta é a opção destacada em verde.</strong> A alternativa B confunde contenção parcial com resolução do incidente. A C extrapola sem evidência suficiente de coordenação entre os eventos internos e externos. A D subestima sinais já fortes demais para ficarem só no campo da suspeita. A melhor conclusão é a de intrusão ativa em estágio inicial de pós-exploração.`,
-    correlation: `Síntese de todas as fontes: <span>auth.log</span> (brute force + sucesso + sudo root) + <span>Windows</span> (autenticação domínio de IP externo) + <span>Firewall</span> (sessão ativa + SMB bloqueado) + <span>SIEM</span> (CRIT + LATERAL_MOVE) = intrusão ativa confirmada em fase de pós-exploração`
-  }
-];
+const COMMENTS = JSON.parse(decodeSecure(COMMENTS_BLOB));
 
 // ─────────────────────────────────────────────
 // LABELS DAS OPÇÕES
@@ -1672,6 +1629,7 @@ function startChallenge() {
   }
 
   userData = { name, pronoun, date };
+  initializeDynamicAlternatives();
 
   document.getElementById('screen-intro').classList.remove('active');
   document.getElementById('screen-challenge').classList.add('active');
@@ -1707,13 +1665,13 @@ function gradeChallenge() {
   let score = 0;
   for (let i = 1; i <= 5; i++) {
     const qKey = `q${i}`;
-    if (userAnswers[qKey] === decodeSecure(ANSWERS_ENC[qKey])) score++;
+    if (userAnswers[qKey] === decodeAnswerToken(ANSWERS_ENC[qKey])) score++;
   }
 
   // Visual feedback on options
   for (let i = 1; i <= 5; i++) {
     const qKey = `q${i}`;
-    const correct = decodeSecure(ANSWERS_ENC[qKey]);
+    const correct = decodeAnswerToken(ANSWERS_ENC[qKey]);
     const userAns = userAnswers[qKey];
     const options = document.querySelectorAll(`input[name="${qKey}"]`);
     options.forEach(opt => {
@@ -1755,7 +1713,7 @@ function gradeChallenge() {
   COMMENTS.forEach((c, idx) => {
     const qKey = `q${idx + 1}`;
     const userAns = userAnswers[qKey];
-    const correctKey = decodeSecure(c.correctEnc);
+    const correctKey = decodeAnswerToken(c.correctEnc);
     const isCorrect = userAns === correctKey;
 
     const userMeta = userAns ? getVisibleOptionMeta(qKey, userAns) : { letter: '—', text: 'Não respondida' };
