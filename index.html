@@ -1028,11 +1028,11 @@
   .hidden { display: none !important; }
 
   .highlight-line {
-    background: rgba(255,107,0,0.05);
+    background: transparent;
     display: block;
-    padding: 1px 4px;
-    border-left: 2px solid rgba(255,107,0,0.3);
-    margin-left: -4px;
+    padding: 1px 0;
+    border-left: none;
+    margin-left: 0;
   }
 
   @media (max-width: 900px) {
@@ -1139,7 +1139,7 @@
 <span class="log-line"><span class="log-ts">2024-03-14 03:31:04</span> <span class="log-host">srv-prod-01</span> sshd[4530]: <span class="log-error">Invalid user oracle from <span class="log-ip">185.220.101.47</span> port 49501 ssh2</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:44:57</span> <span class="log-host">srv-prod-01</span> sshd[4601]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 51022 ssh2</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:45:01</span> <span class="log-host">srv-prod-01</span> sshd[4602]: <span class="log-warn">Failed password for dbadmin from <span class="log-ip">185.220.101.47</span> port 51028 ssh2</span></span>
-<span class="log-line log-success highlight-line"><span class="log-ts">2024-03-14 03:51:33</span> <span class="log-host">srv-prod-01</span> sshd[4688]: <span class="log-success">Accepted password for dbadmin from <span class="log-ip">185.220.101.47</span> port 51840 ssh2</span></span>
+<span class="log-line log-success"><span class="log-ts">2024-03-14 03:51:33</span> <span class="log-host">srv-prod-01</span> sshd[4688]: <span class="log-success">Accepted password for dbadmin from <span class="log-ip">185.220.101.47</span> port 51840 ssh2</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:51:34</span> <span class="log-host">srv-prod-01</span> sshd[4688]: <span class="log-dim">pam_unix(sshd:session): session opened for user dbadmin by (uid=0)</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:51:41</span> <span class="log-host">srv-prod-01</span> sudo[4692]: <span class="log-error">dbadmin : TTY=pts/1 ; PWD=/home/dbadmin ; USER=root ; COMMAND=/bin/bash</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:52:07</span> <span class="log-host">srv-prod-01</span> sshd[4701]: <span class="log-dim">Accepted publickey for monitoring from <span class="log-ip">10.10.1.20</span> port 38812 ssh2</span></span>
@@ -1187,7 +1187,7 @@
 <span class="log-line"><span class="log-ts">2024-03-14 03:31:10</span> <span class="log-host">EDGE-FW-01</span> <span class="log-success">PASS</span> <span class="log-dim">em0 <span class="log-ip">10.10.2.88</span>:41200 → <span class="log-ip">10.10.1.100</span>:443 proto=TCP [LAN-CORP] — Acesso legítimo git-server</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:44:41</span> <span class="log-host">EDGE-FW-01</span> <span class="log-dim">PASS em1 <span class="log-ip">185.220.101.47</span>:51022 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP [INET-IN]</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:44:45</span> <span class="log-host">EDGE-FW-01</span> <span class="log-dim">PASS em1 <span class="log-ip">185.220.101.47</span>:51028 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP [INET-IN]</span></span>
-<span class="log-line highlight-line"><span class="log-ts">2024-03-14 03:51:28</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:51840 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP flags=PA len=260 [INET-IN] bytes_in=1240 bytes_out=3800 duration=23s</span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:51:28</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:51840 → <span class="log-ip">203.0.113.10</span>:22 proto=TCP flags=PA len=260 [INET-IN] bytes_in=1240 bytes_out=3800 duration=23s</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:52:05</span> <span class="log-host">EDGE-FW-01</span> <span class="log-success">PASS</span> <span class="log-dim">em0 <span class="log-ip">10.10.1.20</span>:38812 → <span class="log-ip">10.10.1.50</span>:22 proto=TCP [MONITOR-AGENT]</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:52:18</span> <span class="log-host">EDGE-FW-01</span> <span class="log-warn">PASS</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:52001 → <span class="log-ip">203.0.113.10</span>:445 proto=TCP flags=S [INET-IN] rule=smb-block — BLOQUEADO</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:52:19</span> <span class="log-host">EDGE-FW-01</span> <span class="log-error">BLOCK</span> <span class="log-dim">em1 <span class="log-ip">185.220.101.47</span>:52001 → <span class="log-ip">203.0.113.10</span>:445 proto=TCP [INET-IN] rule=smb-block</span></span>
@@ -1209,7 +1209,7 @@
 <span class="log-line"><span class="log-ts">2024-03-14 03:32:18</span> <span class="log-siem-alert">[INFO]</span> <span class="log-dim">Rule: USER_LOGON_NORMAL | Asset: DC-CORP-01 | Account: mrocha | Source: <span class="log-ip">10.10.2.88</span> | Logon tipo 3 dentro do horário e da subnet esperada | Baseline: normal</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:41:10</span> <span class="log-siem-alert">[ALERT-LOW]</span> <span class="log-dim">Rule: PRIV_LOGON_001 | Asset: DC-CORP-01 | Account: adminloc | Trigger: SeDebugPrivilege atribuído | Nota: comportamento esperado para manutenção programada | Analyst: auto-supressed</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:45:10</span> <span class="log-siem-alert">[ALERT-MED]</span> <span class="log-dim">Rule: SSH_BRUTE_INET_001 | Asset: srv-prod-01 | Trigger: retomada de tentativas após pausa de 14min | Source: <span class="log-ip">185.220.101.47</span> | Padrão: persistente / não automatizado por timing irregular</span></span>
-<span class="log-line highlight-line"><span class="log-ts">2024-03-14 03:51:40</span> <span class="log-siem-alert">[ALERT-CRIT]</span> <span class="log-dim">Rule: BRUTE_FORCE_SUCCESS_001 | Asset: srv-prod-01 | Trigger: autenticação bem-sucedida detectada após sequência de N falhas de mesma origem | Source correlacionada: ver firewall e auth.log | Ação pós-auth: escalação de privilégio detectada (sudo → root) | Classificação: <span class="log-error">PROVÁVEL COMPROMETIMENTO</span></span></span>
+<span class="log-line"><span class="log-ts">2024-03-14 03:51:40</span> <span class="log-siem-alert">[ALERT-CRIT]</span> <span class="log-dim">Rule: BRUTE_FORCE_SUCCESS_001 | Asset: srv-prod-01 | Trigger: autenticação bem-sucedida detectada após sequência de N falhas de mesma origem | Source correlacionada: ver firewall e auth.log | Ação pós-auth: escalação de privilégio detectada (sudo → root) | Classificação: <span class="log-error">PROVÁVEL COMPROMETIMENTO</span></span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:52:00</span> <span class="log-siem-alert">[ALERT-CRIT]</span> <span class="log-dim">Rule: LATERAL_MOVE_001 | Asset: DC-CORP-01 | Trigger: autenticação de domínio recebida de IP externo não catalogado (<span class="log-ip">185.220.101.47</span>) para conta CORP\dbadmin | Anomalia: conta sem histórico de logon remoto externo</span></span>
 <span class="log-line"><span class="log-ts">2024-03-14 03:52:22</span> <span class="log-siem-alert">[ALERT-HIGH]</span> <span class="log-dim">Rule: SMB_SCAN_INET_001 | Asset: EDGE-FW-01 | Trigger: tentativa de acesso SMB porta 445 de mesma origem do incidente SSH | Source: <span class="log-ip">185.220.101.47</span> | Status: bloqueado pelo firewall | Indicativo: reconhecimento pós-comprometimento</span></span>
       </div>
@@ -1231,22 +1231,22 @@
         <label class="option-label">
           <input type="radio" name="q1" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">10.10.1.5 — origem interna com ações administrativas e lockout correlato, mas sem continuidade clara para sucesso SSH externo ou sudo no host afetado.</span>
+          <span class="option-text">10.10.1.5 — aparece em administração interna, backup, RDP e domínio; a hipótese perde força por não fechar sucesso SSH externo nem sudo no host.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q1" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">185.220.101.47 — origem que cruza firewall, auth.log e SIEM: tenta SSH, mantém sessão real, obtém login e encadeia sudo no servidor.</span>
+          <span class="option-text">185.220.101.47 — mantém continuidade entre entrada permitida no firewall, falhas SSH, autenticação aceita e sudo no mesmo servidor afetado.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q1" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">185.220.101.47 — origem com maior volume de falhas no auth.log; indício forte, porém volume isolado ainda não comprova o incidente completo.</span>
+          <span class="option-text">185.220.101.47 — concentra falhas e enumeração no SSH; o volume é forte, mas precisa ser separado de sucesso real e ação pós-autenticação.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q1" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">10.10.2.45 — estação com logons repetidos no domínio no mesmo recorte, mas sem vínculo direto com a sequência SSH ou escalação local.</span>
+          <span class="option-text">10.10.2.45 — mantém logons válidos no domínio durante o recorte; falta vínculo com a porta 22 exposta e com a sessão Linux elevada.</span>
         </label>
       </div>
     </div>
@@ -1261,22 +1261,22 @@
         <label class="option-label">
           <input type="radio" name="q2" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">svc_backup — conta bloqueada no AD após falhas internas, relevante para triagem, mas sem sucesso posterior nem associação ao SSH externo.</span>
+          <span class="option-text">svc_backup — sofre lockout no AD por falhas internas; é evento relevante, mas não acompanha a trilha de origem externa, login aceito e sudo.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q2" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">sysop — usuário testado durante enumeração pelo mesmo IP externo, porém não há login aceito nem ação pós-autenticação ligada a essa conta.</span>
+          <span class="option-text">sysop — surge na enumeração vinda da mesma origem externa; permanece como alvo tentado, mas sem autenticação válida ou ação posterior associada.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q2" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">dbadmin — usuário que concentra falhas, login aceito no Linux às 03:51:33 e reutilização anômala no domínio logo depois.</span>
+          <span class="option-text">dbadmin — aparece nas falhas, no SSH aceito às 03:51:33, no sudo local e na autenticação anômala de domínio após o acesso externo.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q2" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">adminloc — conta privilegiada com eventos sensíveis no período, mas contextualizada como atividade interna esperada e não como alvo do brute force.</span>
+          <span class="option-text">adminloc — possui privilégio e uso explícito de credenciais no período; o contexto aponta manutenção interna, não o alvo final do brute force.</span>
         </label>
       </div>
     </div>
@@ -1291,22 +1291,22 @@
         <label class="option-label">
           <input type="radio" name="q3" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">O ALERT-CRIT do SIEM é um sinal forte, mas sozinho não deve fechar incidente sem validação em logs brutos e telemetria de rede.</span>
+          <span class="option-text">Classificação crítica do SIEM, combinada ao mesmo ativo e origem, sustenta prioridade alta; sem validação nos logs brutos, ainda pode ser só correlação.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q3" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">Login SSH aceito, sessão TCP real no firewall, sudo para root e tentativa SMB posterior formam a cadeia mais robusta de intrusão.</span>
+          <span class="option-text">Sessão permitida no firewall, SSH aceito no Linux, sudo para root e evento posterior no SMB formam a cadeia mais robusta de intrusão observável.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q3" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">Login Linux aceito e autenticação de domínio para CORP\dbadmin indicam risco de reutilização, mas não mostram sozinhos a elevação local.</span>
+          <span class="option-text">SSH aceito e autenticação de domínio para CORP\dbadmin indicam risco de reutilização; sem sudo, a prova de controle local fica incompleta.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q3" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">Eventos 4648 e 4672 do adminloc indicam credencial explícita e privilégio, mas o SIEM os enquadra como manutenção interna esperada.</span>
+          <span class="option-text">Eventos 4648 e 4672 do adminloc indicam privilégio e credencial explícita; o baseline os separa da origem externa e da sequência SSH.</span>
         </label>
       </div>
     </div>
@@ -1321,22 +1321,22 @@
         <label class="option-label">
           <input type="radio" name="q4" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">03:14 – 03:41 UTC reúne lockout de serviço e privilégio no domínio, mas mistura ruído operacional com eventos fora da trilha principal.</span>
+          <span class="option-text">03:14–03:41 UTC reúne lockout de serviço e privilégio no domínio; a janela mistura ruído operacional com eventos fora da cadeia principal.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q4" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">03:28 – 03:51 UTC cobre as primeiras tentativas SSH externas até o sudo para root, primeira ação pós-comprometimento no host.</span>
+          <span class="option-text">03:28–03:51 UTC cobre o início das tentativas SSH externas até o sudo para root, primeira ação pós-comprometimento no host afetado.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q4" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">03:21 – 03:52 UTC inclui backup e monitoramento legítimos; é ampla demais para delimitar a progressão ofensiva principal.</span>
+          <span class="option-text">03:21–03:52 UTC inclui backup, monitoramento e autenticações legítimas; é ampla demais para isolar a progressão ofensiva principal.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q4" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">03:44 – 03:52 UTC cobre a retomada final e passos posteriores, mas ignora o início ativo do brute force externo.</span>
+          <span class="option-text">03:44–03:52 UTC cobre retomada final, sucesso e sinais posteriores; ignora o início ativo do brute force externo observado antes.</span>
         </label>
       </div>
     </div>
@@ -1351,22 +1351,22 @@
         <label class="option-label">
           <input type="radio" name="q5" value="a">
           <span class="option-marker">A</span>
-          <span class="option-text">Brute force SSH bem-sucedido contra dbadmin, sudo para root e sinais iniciais de pós-exploração, com tentativa lateral bloqueada.</span>
+          <span class="option-text">Brute force SSH bem-sucedido contra dbadmin, sudo para root e indícios iniciais de pós-exploração, com tentativa SMB bloqueada no perímetro.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q5" value="b">
           <span class="option-marker">B</span>
-          <span class="option-text">Contenção parcial no firewall ocorreu no SMB, mas isso não desfaz o login aceito nem a escalação local já observada no host.</span>
+          <span class="option-text">Incidente contido no perímetro pela regra SMB; leitura incompleta, porque o login aceito e a elevação local ocorreram antes do bloqueio.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q5" value="c">
           <span class="option-marker">C</span>
-          <span class="option-text">Dois compromissos coordenados seriam hipótese excessiva: há eventos internos sensíveis, porém sem prova de vínculo operacional com o ataque.</span>
+          <span class="option-text">Dois compromissos coordenados envolvendo adminloc e dbadmin; hipótese possível no ruído, mas sem vínculo operacional comprovado entre as trilhas.</span>
         </label>
         <label class="option-label">
           <input type="radio" name="q5" value="d">
           <span class="option-marker">D</span>
-          <span class="option-text">Tratar como mera suspeita subestima a cadeia: login aceito, sudo e correlação entre fontes já sustentam intrusão ativa inicial.</span>
+          <span class="option-text">Suspeita qualificada sem comprometimento confirmado; leitura conservadora demais diante de SSH aceito, sudo e correlação entre fontes.</span>
         </label>
       </div>
     </div>
@@ -1501,7 +1501,7 @@ const ANSWER_SALT = 'MBS::BLUE-TEAM-RAIZ::2026::LOGS::SALT-v4::MarianaBS';
 const ANSWER_PEPPER = '::IR-2024-0847::anti-obvio::';
 const ANSWER_KEY = ANSWER_SALT + ANSWER_PEPPER;
 const ANSWERS_ENC = {"q1": "NmAiGABgPWRnAXYkY3cPMGNleFQYCBILAQ8IeX9yZgoIand5Y0xEFkc=", "q2": "NmAiGABgPWdnAXYkY3cPMWNleFQYCBJQVQoPKXh3ZgsCZHMpMh5CFkc=", "q3": "NmAiGABgPWZnAXYkY3cPMGNleFQYCBIKBFhcKHwjYwJZYXl6YhlEFkc=", "q4": "NmAiGABgPWFnAXYkY3cPMGNleFQYCBJTBFkJfnpxZVtYMCV0YBhGFkc=", "q5": "NmAiGABgPWBnAXYkY3cPM2NleFQYCBJRV1gIeHlxMQkLY3J0YUkSFkc="};
-const COMMENTS_BLOB = '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';
+const COMMENTS_BLOB = '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';
 
 function xorBytesFromB64(token) {
   try {
